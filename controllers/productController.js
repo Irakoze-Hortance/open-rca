@@ -1,15 +1,17 @@
 const {Product,validateProductSchema}=require('../models/productModel')
 const multer=require('multer')
 const express=require('express')
+const path=require('path')
+const { post } = require('../routes/ratingRoute')
 
-const storage=multer.diskStorage({
-    destination:(req,file,callb)=>{
-        callb(null,'./uploads')
+const storage = multer.diskStorage({
+    destination: async function (req, file, cb) {
+        cb(null, "./open-rca/uploads");
     },
-    filename:(req,file,cb)=>{
-        cb(null,file.originalname)
-    }
-});
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    },
+})
 
 const docFilter=(req,file,cb)=>{
     if(!file.originalname.match(/\.(jpeg|jpg|png)$/)){
@@ -18,39 +20,31 @@ const docFilter=(req,file,cb)=>{
     cb(null,true);
 }
 
-const upload=multer({storage:storage,
-fileFilter:docFilter})
+const upload = multer({ storage: storage })
 
 
 createProduct=async(req,res)=>{
-    const body=req.body
+    let body=req.body
     if(!body){
         return res.status(400).json({
             success:false,
             error:'You must provide product details',
         })
     }
-    const  error=validateProductSchema(req.body)
+    body = {...body,productImages :req.files}
+
+    const  {error}=validateProductSchema(body)
     if(error)
         return res.status(400).send(error)
     
-    const product=new Product(body)
+    const newProduct=new Product(body)
 
-    if(!product){
-        return res.status(400).json({
-            success:false,
-            error:err
-        })
-    }
-
-    product.save()
-        .then((doc)=>{
+   await newProduct.save()
             return res.status(201).json({
                 success:true,
-                id:doc_id,
+                product:newProduct,
                 message:'Product added successfully...'
             })
-        })
 
 
 }
@@ -72,18 +66,28 @@ updateProduct=async (req,res)=>{
             return res.status(400).json({
                 err,
                 message:'Product not found',
-            })
-    },
-    product.proId=body.proId,
-    product.proName=body.proName,
-    product.catId=body.catId,
-    product.quantity=body.quantity,
-    product.price=body.price,
-    product.description=body.description,
-    product.review=body.review,
-    product.productImg=req.file.filename,
-    product.tags=body.tags,
+           })
+    
 
+    const proId=body.proId;
+    const proName=body.proName;
+    const catId=body.catId;
+    const quantity=body.quantity;
+    const price=body.price;
+    const description=body.description;
+    const review=body.review;
+    const tag=body.tag;
+    const orderDate=body.orderDate;
+           
+     const updates={
+         proId,catId,proName,quantity,price,description,review,tag,orderDate
+     };      
+
+
+    if(req.file){
+        const productImages=req.file.filename
+        updates.productImages=productImages
+    }
     product.save()
     .then(()=>{
         return res.status(200).json({
@@ -92,8 +96,8 @@ updateProduct=async (req,res)=>{
             message:'Product updated',
         })
     })
-    )
-}
+    },
+    )}
 
 removeProduct=async(req,res)=>{
     await Product.findByIdAndDelete({
@@ -148,10 +152,10 @@ getProductById=async(req,res)=>{
 getProducts=(req,res)=>{
     Product.find()
     .then((docs)=>{
-        if(docs.length<1){
+        if(docs.length<=0){
             return res.status(400).send({
                 success:false,
-                error:'Product not found'
+                error:'Products not found'
             })
         }else{
             return res.status(200).send({
@@ -167,10 +171,57 @@ getProducts=(req,res)=>{
     })
 }
 
+getByCategory=(req,res)=>{
+    Product.find()
+    .then((docs)=>{
+        if(docs.length<=0){
+            return  res.status(400).json({
+                success:false,
+                message:'Products not found',
+            })
+        }else{
+            return res.status(200).json({
+                success:true,
+                products:docs
+            })
+        }
+    }).catch(e=>{
+        return res.status(400).send({
+            success:false,
+            message:'Something went wrong!'
+        })
+    })
+}
+
+searchProduct=(req,res)=>{
+    Product.find()
+    .then((docs)=>{
+        if(docs.length<=0){
+            return res.status(400).json({
+                success:false,
+                message:'Product not found',
+            })
+        }else{
+            return res.status(200).send({
+                success:true,
+                data:docs
+            })
+        }
+    }).catch(e=>{
+        return res.status(400).json({
+            success:false,
+            message:'Something went wrong!'
+        })
+    })
+}
+
 module.exports={
     createProduct,
     updateProduct,
     removeProduct,
     getProducts,
-    getProductById
+    getProductById,
+    getByCategory,
+    searchProduct,
+    upload
 }
