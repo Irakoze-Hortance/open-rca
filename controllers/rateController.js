@@ -1,126 +1,147 @@
-const {Rate,validatedRate}=require('../models/rateModel')
-const express=require('express')
-const { updateProduct } = require('./productController')
+const {
+    Rate,
+    validatedRate
+} = require('../models/rateModel')
+const express = require('express')
 
-RateProduct=async(req,res)=>{
-    const body=req.body
-    if(!body){
+
+RateProduct = async (req, res) => {
+    const body = req.body
+    if (!body) {
         return res.status(400).json({
-            success:false,
-            error:'You must provide a star and a comment',
+            success: false,
+            error: 'You must provide a star and a comment',
         })
     }
 
-    const error=validatedRate(req.body)
+    const {error} = validatedRate(req.body)
 
-    if(error)
+    if (error)
         return res.status(400).send(error)
 
-    const rate=new  Rate(body)   
+    const newRate = new Rate(body);
+    await newRate.save()
 
-    if(!rate){
-        return res.status(400).json({
-            success:false,
-            error:err
-        })
-    }
-
-    rate.save()
-        .then((doc)=>{
             return res.status(201).json({
-                success:true,
-                id:doc._id,
-                message:'Thank you for your review'
+                success: true,
+                rate:newRate,
+                message: 'Thank you for your review'
             })
-        })
-}
+        }
 
-updateRate=async(req,res)=>{
-    const body =req.body
 
-    if(!body){
+updateRate = async (req, res) => {
+    const body = req.body
+
+    if (!body) {
         return res.status(400).json({
-            success:false,
-            error:'you must provide all details to update your rate'
+            success: false,
+            error: 'you must provide all details to update your rate'
         })
     }
 
     Rate.findOne({
-        _id:req.params.id
-    },(err,rate)=>{
-        if(err)
-            return res.status(400).json({
-                err,
-                message:'This  rate does not exist',
-            })           
-    },
-    rate.proId=body.proId,
-    rate.userId=body.userId,
-    rate.stars=body.stars,
-    rate.review=body.review,
+            _id: req.params.id
+        }, (err, rate) => {
+            if (err)
+                return res.status(400).json({
+                    err,
+                    message: 'This  rate does not exist',
+                })
+                const proId = body.proId;
+                const userId = body.userId;
+                const stars = body.stars;
+                const review = body.review;
 
-    rate.save()
-    .then(()=>{
-        return  res.status(200).json({
-            success:true,
-            id:rate._id,
-            message:'Rating updated',
-        })
-    })
-    )
-}
+            const updates={
+                proId,userId,stars,review
+            };
 
-unrate=async(req,res)=>{
+            rate.save()
+            .then(() => {
+                return res.status(200).json({
+                    success: true,
+                    id: rate._id,
+                    message: 'Rating updated',
+                })
+            })
+
+        },
+    )}
+
+unrate = async (req, res) => {
     await Rate.findByIdAndDelete({
-        _id:req.params.id
-    },(err,rate)=>{
-        if(err){
+        _id: req.params.id
+    }, (err, rate) => {
+        if (err) {
             return res.status(400).json({
-                success:false,
-                error:err
+                success: false,
+                error: err
             })
         }
 
-        if(!rate){
+        if (!rate) {
             return res.status(404).json({
-                success:false,
-                message:'Rate not found'
+                success: false,
+                message: 'Rate not found'
             })
         }
 
         return res.status(200).json({
-            success:true,
-            data:rate
+            success: true,
+            data: rate
         })
-    }).catch(err=>console.log(err))
+    }).catch(err => console.log(err))
 }
 
-getRateByStars=async(req,res)=>{
+getRateByStars = async (req, res) => {
     await Rate.findOne({
-        stars:req.params.stars
-    },(err,rate)=>{
-        if(err){
+        stars: req.params.stars
+    }, (err, rate) => {
+        if (err) {
             return res.status(400).json({
-                success:false,
-                error:err
+                success: false,
+                error: err
             })
         }
-        if(!rate){
+        if (!rate) {
             return res.status(404).json({
-                success:false,
-                error:'Rate not found'
+                success: false,
+                error: 'Rate not found'
             })
         }
         return res.status(200).json({
-            success:true,
-            data:rate
+            success: true,
+            data: rate
         })
-    }).catch(err=>console.log(err))
+    }).catch(err => console.log(err))
 }
 
-getRates=(req,res)=>{
+getRates = (req, res) => {
     Rate.find()
+        .then((docs) => {
+            if (docs.length <=0) {
+                return res.status(400).send({
+                    success: false,
+                    error: "Rate record doesn't exist"
+                })
+            } else {
+                return res.status(200).send({
+                    success: true,
+                    data: docs
+                })
+            }
+        }).catch(e => {
+            return res.status(400).send({
+                success: false,
+                message: "Something went wrong"
+            })
+        })
 }
-module.exports={
-    RateProduct
+module.exports = {
+    RateProduct,
+    updateRate,
+    unrate,
+    getRateByStars,
+    getRates
 }
