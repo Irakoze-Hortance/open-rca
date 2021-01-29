@@ -3,7 +3,16 @@ const Joi=require('joi')
 const Schema=mongoose.Schema
 
 const Rate=new Schema({
-    rateNbr:{
+    userId:{
+        type:String,
+        required:true
+    },
+    
+    proid:{
+        type:String,
+        required:true
+    },
+    stars:{
         type:Number,
         required:true
     },
@@ -15,11 +24,13 @@ const Rate=new Schema({
 
 function validatedRate(Rate) {
     const JoiSchema=Joi.object({
-        rateNbr:Joi.number().min(1).max(5),
-        review:Joi.String().max(200)
+        userId:Joi.string(),
+        proId:Joi.string(),
+        stars:Joi.number().min(1).max(5),
+        review:Joi.string()
     }).options({abortEarly:false});
 return JoiSchema.validate(Rate)
 }
 
-module.exportsRate=mongoose.model('Rate',Rate)
+module.exports.Rate=mongoose.model('Rate',Rate)
 module.exports.validatedRate=validatedRate
