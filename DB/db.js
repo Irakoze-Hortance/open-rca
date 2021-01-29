@@ -1,5 +1,6 @@
 const mongoose=require('mongoose')
-mongoose.connect('mongodb://localhost/open-rca',{
+let MONGO_URI="mongodb+srv://admin:amdin@2020@cluster0.1n16l.mongodb.net/bosses-ecommerce?retryWrites=true&w=majority";
+mongoose.connect(MONG_URI,{
     useNewUrlParser:true,
     useUnifiedTopology:true
 })
