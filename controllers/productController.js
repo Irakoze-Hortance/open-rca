@@ -1,8 +1,10 @@
 const {Product,validateProductSchema}=require('../models/productModel')
 const multer=require('multer')
 const express=require('express')
+const db=require('../DB/db')
 const path=require('path')
 const { post } = require('../routes/ratingRoute')
+const { nextTick } = require('process')
 
 const storage = multer.diskStorage({
     destination: async function (req, file, cb) {
@@ -77,10 +79,10 @@ updateProduct=async (req,res)=>{
     const description=body.description;
     const review=body.review;
     const tag=body.tag;
-    const orderDate=body.orderDate;
+    const registerDate=body.registerDate;
            
      const updates={
-         proId,catId,proName,quantity,price,description,review,tag,orderDate
+         proId,catId,proName,quantity,price,description,review,tag,registerDate
      };      
 
 
@@ -215,6 +217,52 @@ searchProduct=(req,res)=>{
     })
 }
 
+getLatest=(req,res)=>{
+
+ Product.find({$query:{},$orderby:{registerDate:-1}})
+
+ .then((docs)=>{
+     if(docs.length<=0){
+         return res.status(400).json({
+             success:false,
+             message:'Data not found',
+         })
+     }else{
+         return res.status(200).send({
+             success:true,
+             latest:docs
+         })
+     }
+ }).catch(e=>{
+     return res.status(400).json({
+         success:false,
+         message:'Something went wrong'
+     })
+ })
+}
+
+getPopularProducts=(req,res)=>{
+   Product.aggregate([
+       {
+           $lookup:{
+               from:'orders',
+               localField:'proId',
+               foreignField:'_id',
+               as:'orderdetails'
+           }
+       },
+       {
+           $match:{
+               'orderdetails':req.params.proId
+           }
+       }
+   ]).toArray(function (err,res) {
+       if(err) throw err;
+       console.log(JSON.stringify(res));
+       
+   })
+     
+}
 module.exports={
     createProduct,
     updateProduct,
@@ -223,5 +271,7 @@ module.exports={
     getProductById,
     getByCategory,
     searchProduct,
+    getLatest,
+    getPopularProducts,
     upload
 }
