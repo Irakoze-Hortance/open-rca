@@ -3,7 +3,7 @@ const {
     validatedRate
 } = require('../models/rateModel')
 const express = require('express')
-
+const db=require('../../open-rca/DB/db')
 
 RateProduct = async (req, res) => {
     const body = req.body
