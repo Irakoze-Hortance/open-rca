@@ -2,7 +2,7 @@ const  express=require('express');
 const bodyParser=require('body-parser');
 const cors=require('cors')
 
-require('./open-rca/DB/db')
+const d=require('./open-rca/DB/db')
 const app=express()
 const port=4000
 const productRouter=require('./open-rca/routes/productRoute')
