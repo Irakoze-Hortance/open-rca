@@ -9,8 +9,10 @@ mongoose.connect(MONG_URI,{
 
 })
 .catch(e=>{
-    console.erros("Error connecting to db",e.message)
+    console.error("Error connecting to db",e)
 })
+require=('../models/productModel')
+require('../models/rateModel')
 
 const db=mongoose.connection
 module.exports=db
