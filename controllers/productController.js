@@ -1,10 +1,8 @@
-const {Product,validateProductSchema}=require('../models/productModel')
 const multer=require('multer')
 const express=require('express')
-const db=require('../DB/db')
+const {Product, validateProductSchema} = require('../models/productModel')
+const dbConfig=require('../config/db.config')
 const path=require('path')
-// const { post } = require('../routes/ratingRoute')
-// const { nextTick } = require('process')
 
 const storage = multer.diskStorage({
     destination: async function (req, file, cb) {
@@ -175,7 +173,7 @@ getProducts=(req,res)=>{
 }
 
 getByCategory=(req,res)=>{
-    Product.find()
+    Product.find({'catId':req.params.catId})
     .then((docs)=>{
         if(docs.length<=0){
             return  res.status(400).json({
@@ -197,7 +195,7 @@ getByCategory=(req,res)=>{
 }
 
 searchProduct=(req,res)=>{
-    Product.find()
+    Product.find({'proName': req.params.proName})
     .then((docs)=>{
         if(docs.length<=0){
             return res.status(400).json({
@@ -242,7 +240,6 @@ getLatest=(req,res)=>{
 }
 
 getPopularProducts=async (req,res)=>{
-
     const prodAgg = await Product.aggregate([
         {
             $match:{ quantity:{ $gte:7 } } 
