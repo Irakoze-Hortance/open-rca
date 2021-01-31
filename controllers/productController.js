@@ -3,8 +3,8 @@ const multer=require('multer')
 const express=require('express')
 const db=require('../DB/db')
 const path=require('path')
-const { post } = require('../routes/ratingRoute')
-const { nextTick } = require('process')
+// const { post } = require('../routes/ratingRoute')
+// const { nextTick } = require('process')
 
 const storage = multer.diskStorage({
     destination: async function (req, file, cb) {
@@ -143,6 +143,7 @@ getProductById=async(req,res)=>{
                 error:'Product not found'
             })
         }
+
         return res.status(200).json({
             success:true,
             data:product
@@ -220,7 +221,6 @@ searchProduct=(req,res)=>{
 getLatest=(req,res)=>{
 
  Product.find({$query:{},$orderby:{registerDate:-1}})
-
  .then((docs)=>{
      if(docs.length<=0){
          return res.status(400).json({
@@ -241,28 +241,20 @@ getLatest=(req,res)=>{
  })
 }
 
-getPopularProducts=(req,res)=>{
-   Product.aggregate([
-       {
-           $lookup:{
-               from:'orders',
-               localField:'proId',
-               foreignField:'_id',
-               as:'orderdetails'
-           }
-       },
-       {
-           $match:{
-               'orderdetails':req.params.proId
-           }
-       }
-   ]).toArray(function (err,res) {
-       if(err) throw err;
-       console.log(JSON.stringify(res));
-       
-   })
-     
+getPopularProducts=async (req,res)=>{
+
+    const prodAgg = await Product.aggregate([
+        {
+            $match:{ quantity:{ $gte:7 } } 
+        }
+    ]).exec()
+    res.json({prodAgg})
+    
+    console.log(prodAgg)
 }
+     
+   
+
 module.exports={
     createProduct,
     updateProduct,
